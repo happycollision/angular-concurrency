@@ -1,0 +1,55 @@
+{
+  "name": "angular-concurrency",
+  "private": false,
+  "version": "1.0.0-beta.1",
+  "description": "Ember Concurrency's ideas, but for Angular",
+  "main": "lib/task.js",
+  "types": "lib/task.d.ts",
+  "license": "MIT",
+  "author": "Don Denton",
+  "scripts": {
+    "lint": "tslint -p tsconfig.json",
+    "posttest": "npm run lint",
+    "release:major": "npm version major && git push --follow-tags",
+    "release:minor": "npm version minor && git push --follow-tags",
+    "release:patch": "npm version patch && git push --follow-tags",
+    "start": "npm run test",
+    "test": "jest --watch",
+    "pubtest": "jest",
+    "build": "tsc",
+    "prepublishOnly": "npm run pubtest && npm run build"
+  },
+  "repository": "https://github.com/happycollision/angular-concurrency",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "keywords": [],
+  "jest": {
+    "transform": {
+      "^.+\\.(t|j)sx?$": "ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(js|ts)$",
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ]
+  },
+  "devDependencies": {
+    "@angular/compiler": "^5.2.0",
+    "@angular/core": "^5.2.0",
+    "@types/jest": "^22.2.3",
+    "@types/node": "^10.3.0",
+    "codelyzer": "^4.3.0",
+    "jest": "^23.1.0",
+    "rxjs": "^6.2.0",
+    "rxjs-compat": "^6.2.0",
+    "ts-jest": "^22.4.6",
+    "ts-node": "^6.0.5",
+    "tslint": "^5.10.0",
+    "typescript": "^2.9.1"
+  },
+  "peerDependencies": {
+    "@angular/compiler": "^5.2.0",
+    "@angular/core": "^5.2.0"
+  }
+}

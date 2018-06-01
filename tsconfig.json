@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "importHelpers": true,
+    "moduleResolution": "node",
+    "strict": false,
+    "noEmitHelpers": true,
+    "sourceMap": true,
+    "noImplicitAny": false,
+    "outDir": "lib",
+    "declaration": true,
+    "lib": [
+      "es2015",
+      "dom"
+    ]
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "**/*.spec.*"
+  ]
+}
