@@ -1,4 +1,4 @@
-# Angular Concurrecny
+# Angular Concurrency
 
 Most everyone using Ember.js today loves [Ember Concurrency](http://ember-concurrency.com). But some of us unlucky souls don't get to choose the frameworks we must use at our jobs... so this project allows *similar* functionality in Angular. I am essentially adding functionality as I need it.
 
