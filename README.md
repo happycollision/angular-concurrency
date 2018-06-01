@@ -10,6 +10,7 @@ There are no plans (yet) to make this work with Observables. You'll need to only
 
 ## Features
 
+- Zero dependencies
 - Automatically cancels all tasks when a component is destroyed
 - Schedule tasks' concurrency types using 'concurrent' (default), 'drop', and 'restart'
 - Access derived state of your tasks: `isRunning`, `lastCompletedValue`, `lastSuccessfulValue`, `lastErrorValue`, `currentValue`
