@@ -32,7 +32,7 @@ Things I would like to do:
 ## example:
 
 ```ts
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { createTask, Task, Schedule, TaskObject, timeout } from 'angular-concurrency';
 
 @Component({
@@ -40,13 +40,13 @@ import { createTask, Task, Schedule, TaskObject, timeout } from 'angular-concurr
   templateUrl: './concurrency-test.component.html',
   styleUrls: ['./concurrency-test.component.scss'],
 })
-export class NewPackageComponent implements OnInit {
+export class ConcurrencyTestComponent {
   basicTaskText = 'nothing';
   droppingTaskText = 'nothing';
   cancelTaskSeconds = 0;
   restartTaskSeconds = 0;
 
-  basicTask = createTask.call(this, function* () {
+  basicTask = createTask.call(this, function* (this: ConcurrencyTestComponent) {
     this.basicTaskText = 'waiting.';
     yield timeout(500);
     this.basicTaskText = 'waiting..';
@@ -56,9 +56,8 @@ export class NewPackageComponent implements OnInit {
     return this.basicTaskText = 'BLAMMO';
   });
 
-
   @Task('drop')
-  droppingTask = function* (this: NewPackageComponent) {
+  droppingTask = function* (this: ConcurrencyTestComponent) {
     this.droppingTaskText = 'waiting.';
     yield timeout(500);
     this.droppingTaskText = 'waiting..';
@@ -68,11 +67,10 @@ export class NewPackageComponent implements OnInit {
     return this.droppingTaskText = 'BLAMMO';
   };
 
-
   @Task({
     onChange: function () { console.log('changed', this); },
   })
-  cancelTask = function* (this: NewPackageComponent) {
+  cancelTask = function* (this: ConcurrencyTestComponent) {
     let i = 0;
     while (true) {
       this.cancelTaskSeconds = ++i;
@@ -81,7 +79,7 @@ export class NewPackageComponent implements OnInit {
     }
   };
 
-  @Task('restart') restartTask: TaskObject = function* (this: NewPackageComponent) {
+  @Task('restart') restartTask: TaskObject = function* (this: ConcurrencyTestComponent) {
     let i = 0;
     while (true) {
       this.restartTaskSeconds = ++i;
