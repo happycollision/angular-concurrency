@@ -33,7 +33,7 @@ Things I would like to do:
 
 ```ts
 import { Component, OnInit } from '@angular/core';
-import { createTask, Task, Schedule, TaskObject, timeout } from '../../lib/tasks';
+import { createTask, Task, Schedule, TaskObject, timeout } from 'angular-concurrency';
 
 @Component({
   selector: 'app-concurrency-test',
