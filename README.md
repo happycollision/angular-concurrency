@@ -6,7 +6,7 @@ I am using this code in production on a couple projects, but it is still a work 
 
 Because of Typescript limitations, there are *two* ways that you can create a task. One is simpler (and uses a decorator), and works fine if you only reference the task inside your HTML template. The other is more verbose, but will type-check properly if you refer to the task inside your class (if you invoke it from another function or something). I believe a future version of TS (after decorators are stage 4 in JS) will allow me to use only the simple version. I am not sure though.
 
-There are no plans (yet) to make this work with Observables. You'll need to only yield POJOs and Promises inside your generator.
+There are no plans (yet) to make this work with Observables. Yielding a promise will wait for it to resolve before continuing, and yielding anything else will not transform the yielded data in any way.
 
 ## Features
 
