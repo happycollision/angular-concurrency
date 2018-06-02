@@ -1,6 +1,6 @@
 # Angular Concurrency
 
-Most everyone using Ember.js today loves [Ember Concurrency](http://ember-concurrency.com). But some of us unlucky souls don't get to choose the frameworks we must use at our jobs... so this project allows *similar* functionality in Angular. I am essentially adding functionality as I need it.
+Most everyone using Ember.js today loves [Ember Concurrency](http://ember-concurrency.com). This project allows *similar* functionality in Angular. I am essentially adding functionality as I need it.
 
 I am using this code in production on a couple projects, but it is still a work in progress. See the examples below for the things you get out of the box.
 
