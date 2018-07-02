@@ -119,7 +119,4 @@ export class ConcurrencyTestComponent {
 <button (click)="restartTask.cancelAll()">Cancel</button>
 ```
 
-# Changelog
-
-## 1.0.0
-* inital release
+# [Changelog](./CHANGELOG.md)
