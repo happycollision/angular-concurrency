@@ -47,13 +47,13 @@ export class ConcurrencyTestComponent {
   cancelTaskSeconds = 0;
   restartTaskSeconds = 0;
 
-  basicTask = createTask.call(this, function* (this: ConcurrencyTestComponent) {
+  basicTask = createTask.call(this, function* (this: ConcurrencyTestComponent, myTiming: number = 500) {
     this.basicTaskText = 'waiting.';
-    yield timeout(500);
+    yield timeout(myTiming);
     this.basicTaskText = 'waiting..';
-    yield timeout(500);
+    yield timeout(myTiming);
     this.basicTaskText = 'waiting...';
-    yield timeout(500);
+    yield timeout(myTiming);
     return this.basicTaskText = 'BLAMMO';
   });
 
@@ -97,6 +97,7 @@ export class ConcurrencyTestComponent {
 <div>count: {{basicTask.count}}</div>
 <div>{{basicTaskText}}</div>
 <button (click)="basicTask.perform()">Perform</button>
+<button (click)="basicTask.perform(250)">Perform Faster</button>
 
 <h3>cancel example</h3>
 <div>is running: {{cancelTask.isRunning}}</div>

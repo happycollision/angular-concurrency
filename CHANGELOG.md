@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - Changelog is now this file.
 
+### Added
+- `task.perform()` now takes whatever arguments you'd like to pass to your generator.
+
 ## [1.0.0-beta.1] - 2018-06-01
 ### Added
 - Initial... so everything.

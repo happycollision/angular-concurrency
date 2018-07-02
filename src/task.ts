@@ -51,11 +51,11 @@ export class TaskInstance {
     this.endWithCancel();
   }
 
-  public start(context: object): this {
+  public start(context: object, ...taskArgs: any[]): this {
     if (this.hasStarted) return this;
     this.hasStarted = true;
     this.isRunning = true;
-    const iterator = this.generatorFn.call(context);
+    const iterator = this.generatorFn.call(context, ...taskArgs);
     this.run(context, iterator);
     return this;
   }
@@ -135,21 +135,21 @@ export class TaskObject {
     return this;
   }
 
-  public perform(): TaskInstance {
+  public perform(...taskArgs: any[]): TaskInstance {
     if (this.parentDestroyed) return this.dropNewInstance();
 
     switch (this.schedule) {
       case Schedule.concurrent:
-        return this.startNewInstance();
+        return this.startNewInstance(...taskArgs);
       case Schedule.drop:
         if (this.isRunning) {
           return this.dropNewInstance();
         } else {
-          return this.startNewInstance();
+          return this.startNewInstance(...taskArgs);
         }
       case Schedule.restart:
         this.cancelAll();
-        return this.startNewInstance();
+        return this.startNewInstance(...taskArgs);
     }
   }
 
@@ -174,9 +174,9 @@ export class TaskObject {
     };
   }
 
-  private startNewInstance(): TaskInstance {
+  private startNewInstance(...taskArgs: any[]): TaskInstance {
     this._currentValue = null;
-    const newInstance = new TaskInstance(this.generatorFn, this.evaluateReturn.bind(this)).start(this.parentComponent);
+    const newInstance = new TaskInstance(this.generatorFn, this.evaluateReturn.bind(this)).start(this.parentComponent, ...taskArgs);
     this.instances.push(newInstance);
     this.signalChange();
     return newInstance;
