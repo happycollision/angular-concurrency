@@ -1,7 +1,7 @@
 {
   "name": "angular-concurrency",
   "private": false,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Ember Concurrency's ideas, but for Angular",
   "main": "lib/task.js",
   "types": "lib/task.d.ts",
