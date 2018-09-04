@@ -10,8 +10,8 @@ There are no plans (yet) to make this work with Observables. Yielding a promise 
 
 ## Features
 
-- Zero dependencies
-- Automatically cancels all tasks when a component is destroyed
+- Zero *added* dependencies (all peer dependencies should come with Angular)
+- Automatically cancels all tasks when a component is destroyed ([known bug for this feature](https://github.com/happycollision/angular-concurrency/issues/1))
 - Schedule tasks' concurrency types using 'concurrent' (default), 'drop', and 'restart'
 - Access derived state of your tasks: `isRunning`, `lastCompletedValue`, `lastSuccessfulValue`, `lastErrorValue`, `currentValue`
 
