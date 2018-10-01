@@ -143,7 +143,11 @@ export class TaskObject {
   }
 
   public setSchedule(schedule?: Schedule): this {
-    if (schedule) { this._schedule = schedule; }
+    if (!schedule) return this;
+    if (Object.keys(Schedule).indexOf(schedule) === -1) {
+      throw new Error(`The schedule name ${schedule} is not a valid schedule.`);
+    }
+    this._schedule = schedule;
     return this;
   }
 

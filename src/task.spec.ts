@@ -91,6 +91,17 @@ test('all task instances can be cancelled', async () => {
 });
 
 describe('scheduling', () => {
+  test('an incorrect schedule name throws', async () => {
+    class FakeAngularComponent {
+      count = 0;
+      myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+        return true;
+      }).setSchedule('wrong');
+    }
+
+    expect(() => controller.create(() => new FakeAngularComponent())).toThrowError('schedule');
+  });
+
   test('a task runs concurrent instances (by default)', async () => {
     class FakeAngularComponent {
       count = 0;
