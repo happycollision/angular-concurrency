@@ -6,9 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
+- tests
 - Referecnce to [issue 1](https://github.com/happycollision/angular-concurrency/issues/1) in Readme
 ### Changed
 - Documentation wording about dependencies
+### Fixed
+- discovered some bugs once I tested the implementation properly. All better.
 
 ## [1.0.1] - 2018-08-01
 ### Changed
