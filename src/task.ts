@@ -26,17 +26,25 @@ export interface TaskOptions {
   onChange?: (task: TaskObject) => void;
 }
 
+export interface ITaskInstance {
+  isRunning: boolean;
+  completed: null | { success: boolean, error: boolean, value: any };
+  isCancelled: boolean;
+  hasStarted: boolean;
+  cancel(): void;
+}
+
 let uid = 0;
 function getNewId(): number {
   return ++uid;
 }
 
-export class TaskInstance {
+export class TaskInstance implements ITaskInstance {
   id = getNewId();
   hasStarted = false;
   isRunning = false;
   isCancelled = false;
-  completed: { success: boolean, error: boolean, value: any } = null;
+  completed: null | { success: boolean, error: boolean, value: any } = null;
 
   private get shouldRun(): boolean {
     return (!this.isCancelled) && this.isRunning;
@@ -70,7 +78,11 @@ export class TaskInstance {
         return this.endWithErrorValue(e);
       }
       if (done) {
-        this.endWithSuccessValue(resolved);
+        if (value instanceof Error) {
+          this.endWithErrorValue(value);
+        } else {
+          this.endWithSuccessValue(resolved);
+        }
       } else {
         this.run(context, iterator, resolved);
       }
@@ -103,7 +115,7 @@ export class TaskObject {
   private parentDestroyed = false;
   private _lastCompletedValue: any = null;
   private _lastSuccessfulValue: any = null;
-  private _lastErrorValue: Error = null;
+  private _lastErrorValue: Error | null = null;
   private _currentValue: any;
   private _schedule: Schedule = Schedule.concurrent;
   private _onChange: (task: TaskObject) => void = () => { };
@@ -135,7 +147,7 @@ export class TaskObject {
     return this;
   }
 
-  public perform(...taskArgs: any[]): TaskInstance {
+  public perform(...taskArgs: any[]): ITaskInstance {
     if (this.parentDestroyed) return this.dropNewInstance();
 
     switch (this.schedule) {
@@ -163,7 +175,7 @@ export class TaskObject {
   }
 
   private hookUpParentEvents() {
-    const component = this.parentComponent;
+    const component: any = this.parentComponent;
     const parentDestroy: () => void = component['ngOnDestroy'] || (() => { });
 
     component['ngOnDestroy'] = () => {
@@ -192,15 +204,17 @@ export class TaskObject {
 
   private evaluateReturn(finishedTask: TaskInstance) {
     this.signalChange();
-    if (finishedTask.isCancelled) { return; }
-    if (finishedTask.completed.success) {
-      this._lastSuccessfulValue = finishedTask.completed.value;
+    if (finishedTask.completed) {
+      if (finishedTask.completed.success) {
+        this._lastSuccessfulValue = finishedTask.completed.value;
+        this._lastCompletedValue = finishedTask.completed.value;
+      }
+      if (finishedTask.completed.error) {
+        this._lastErrorValue = finishedTask.completed.value;
+        this._lastCompletedValue = finishedTask.completed.value;
+      }
+      this._currentValue = finishedTask.completed.value;
     }
-    if (finishedTask.completed.error) {
-      this._lastErrorValue = finishedTask.completed.value;
-      this._lastCompletedValue = finishedTask.completed.value;
-    }
-    this._currentValue = finishedTask.completed.value;
   }
 
   private signalChange() {
