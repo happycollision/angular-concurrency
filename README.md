@@ -12,7 +12,7 @@ There are no plans (yet) to make this work with Observables. Yielding a promise 
 
 - Zero *added* dependencies (all peer dependencies should come with Angular)
 - Automatically cancels all tasks when a component is destroyed ([known bug for this feature](https://github.com/happycollision/angular-concurrency/issues/1))
-- Schedule tasks' concurrency types using 'concurrent' (default), 'drop', and 'restart'
+- Schedule tasks' concurrency types using 'concurrent' (default), 'drop', 'restart', and 'enqueue'
 - Access derived state of your tasks: `isRunning`, `lastCompletedValue`, `lastSuccessfulValue`, `lastErrorValue`, `currentValue`
 
 ## Documentation
@@ -26,9 +26,8 @@ Love to you all!
 I am not necessarily interested in feature-pairity with EC. Feature requests are welcome. I will, however, eventually be sure that any terminology is comparable, but I have not taken the time to do that just yet.
 
 Things I would like to do:
-- Add tests (this will happen before any significant changes to the code)
-- Have documentation
-- Have live examples inside an actual Anguar app.
+- Add documentation
+- Add live examples inside an actual Anguar app.
 
 ## example:
 

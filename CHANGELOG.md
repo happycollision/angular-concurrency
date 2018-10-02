@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Feature: Enqueue schedule
 ### Changed
 - Using a bad schedule name for a task will now throw instead of just fail to run at perform time.
 
