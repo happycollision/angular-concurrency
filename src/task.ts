@@ -17,6 +17,7 @@ export const Schedule = strEnum([
   'concurrent',
   'drop',
   'restart',
+  'enqueue',
 ]);
 
 export type Schedule = keyof typeof Schedule;
@@ -112,6 +113,7 @@ export class TaskInstance implements ITaskInstance {
 
 export class TaskObject {
   private instances: TaskInstance[] = [];
+  private enqueued: Array<[TaskInstance, any[]]> = [];
   private parentDestroyed = false;
   private _lastCompletedValue: any = null;
   private _lastSuccessfulValue: any = null;
@@ -166,10 +168,13 @@ export class TaskObject {
       case Schedule.restart:
         this.cancelAll();
         return this.startNewInstance(...taskArgs);
+      case Schedule.enqueue:
+        return this.enqueueNewInstance(...taskArgs);
     }
   }
 
   public cancelAll() {
+    this.emptyQueue();
     this.instances.forEach(inst => inst.cancel());
   }
 
@@ -198,6 +203,35 @@ export class TaskObject {
     return newInstance;
   }
 
+  private enqueueNewInstance(...taskArgs: any[]): TaskInstance {
+    this._currentValue = null;
+    const newInstance = new TaskInstance(this.generatorFn, this.evaluateReturn.bind(this));
+
+    this.enqueued.push([newInstance, taskArgs]);
+    this.instances.push(newInstance);
+
+    this.checkQueue();
+    return newInstance;
+  }
+
+  private emptyQueue() {
+    this.enqueued = [];
+  }
+
+  private checkQueue() {
+    if (this.isRunning) return;
+    const nextEnqueued = this.enqueued.pop();
+    if (nextEnqueued) {
+      const [instance, args] = nextEnqueued;
+      if (instance.isCancelled) {
+        this.checkQueue();
+        return;
+      }
+      instance.start(this.parentComponent, ...args);
+      this.signalChange();
+    }
+  }
+
   private dropNewInstance(): TaskInstance {
     const newInstance = new TaskInstance(this.generatorFn, this.evaluateReturn.bind(this));
     newInstance.cancel();
@@ -207,7 +241,7 @@ export class TaskObject {
   }
 
   private evaluateReturn(finishedTask: TaskInstance) {
-    this.signalChange();
+    this.checkQueue();
     if (finishedTask.completed) {
       if (finishedTask.completed.success) {
         this._lastSuccessfulValue = finishedTask.completed.value;
@@ -219,6 +253,7 @@ export class TaskObject {
       }
       this._currentValue = finishedTask.completed.value;
     }
+    this.signalChange();
   }
 
   private signalChange() {
