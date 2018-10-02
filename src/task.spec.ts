@@ -91,6 +91,17 @@ test('all task instances can be cancelled', async () => {
 });
 
 describe('scheduling', () => {
+  test('an incorrect schedule name throws', async () => {
+    class FakeAngularComponent {
+      count = 0;
+      myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+        return true;
+      }).setSchedule('wrong');
+    }
+
+    expect(() => controller.create(() => new FakeAngularComponent())).toThrowError('schedule');
+  });
+
   test('a task runs concurrent instances (by default)', async () => {
     class FakeAngularComponent {
       count = 0;
@@ -154,6 +165,57 @@ describe('scheduling', () => {
 
     expect(component.finishedCount).toEqual(1);
     expect(component.myTask.isRunning).toEqual(false); // smoke test for bad logic inside this test.
+  });
+
+  test('a task can enqueue performs', async () => {
+    class FakeAngularComponent {
+      startedCount = 0;
+      finishedCount = 0;
+      myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+        this.startedCount++;
+        yield timeout(3);
+        this.finishedCount++;
+      }).setSchedule('enqueue');
+    }
+    const component = controller.create(() => new FakeAngularComponent());
+
+    component.myTask.perform();
+    component.myTask.perform();
+    await timeout();
+    expect(component.startedCount).toEqual(1);
+
+    await timeout(4);
+    expect(component.startedCount).toEqual(2);
+    expect(component.finishedCount).toEqual(1);
+
+    await timeout(3);
+    expect(component.startedCount).toEqual(2);
+    expect(component.finishedCount).toEqual(2);
+    expect(component.myTask.isRunning).toEqual(false); // smoke test for bad logic inside this test.
+  });
+
+  test('enqueued performs can be cancelled with task.cancelAll()', async () => {
+    class FakeAngularComponent {
+      startedCount = 0;
+      finishedCount = 0;
+      myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+        this.startedCount++;
+        yield timeout(3);
+        this.finishedCount++;
+      }).setSchedule('enqueue');
+    }
+    const component = controller.create(() => new FakeAngularComponent());
+
+    component.myTask.perform();
+    component.myTask.perform();
+    await timeout();
+    expect(component.startedCount).toEqual(1);
+
+    component.myTask.cancelAll();
+    await timeout(7);
+
+    expect(component.startedCount).toEqual(1);
+    expect(component.finishedCount).toEqual(0);
   });
 });
 
