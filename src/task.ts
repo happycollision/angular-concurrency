@@ -11,6 +11,8 @@ interface Component {
   [s: string]: any;
 }
 
+type CreateTaskGeneratorFn = (...args: any[]) => IterableIterator<any> | GeneratorFunction;
+
 // See https://basarat.gitbooks.io/typescript/content/docs/types/literal-types.html
 function strEnum<T extends string>(o: Array<T>): { [K in T]: K } {
   return o.reduce((res, key) => {
@@ -267,8 +269,25 @@ export class TaskObject {
   }
 }
 
-export function createTask(this: Component, generator: GeneratorFunction): TaskObject {
-  return new TaskObject(this, generator);
+export function _getComponentAndGenerator<C extends Component, G extends CreateTaskGeneratorFn>(currentThis: C | any, generatorOrComponent: G | C, nothingOrGenerator?: G): [C, G] {
+  if (nothingOrGenerator) {
+    return [
+      generatorOrComponent as C,
+      nothingOrGenerator,
+    ];
+  } else {
+    return [
+      currentThis,
+      generatorOrComponent as G,
+    ];
+  }
+}
+
+export function createTask(this: any, component: Component, generator: CreateTaskGeneratorFn): TaskObject;
+export function createTask(this: Component, generator: CreateTaskGeneratorFn): TaskObject;
+export function createTask(this: Component | any, generatorOrComponent: CreateTaskGeneratorFn | Component, nothingOrGenerator?: CreateTaskGeneratorFn): TaskObject {
+  const [ component, generator ] = _getComponentAndGenerator(this, generatorOrComponent, nothingOrGenerator);
+  return new TaskObject(component, generator as any as GeneratorFunction);
 }
 
 
@@ -284,7 +303,7 @@ function taskDecoratorFactory(options: TaskOptions | Schedule = {}) {
       if (this[propKey] instanceof TaskObject) {
         theTask = this[propKey];
       } else {
-        theTask = createTask.call(this, this[propKey]);
+        theTask = createTask(this, this[propKey]);
       }
       this[propKey] = theTask
         .onChange(settings.onChange)

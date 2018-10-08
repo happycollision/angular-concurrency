@@ -1,4 +1,4 @@
-import {createTask, TaskObject, timeout} from './task';
+import {createTask, TaskObject, timeout, Schedule} from './task';
 
 const controller = new (class FakeAngularController {
   components: any[] = [];
@@ -24,9 +24,42 @@ const controller = new (class FakeAngularController {
 
 afterEach(() => controller.destroyAll());
 
-test('a task can be created on a component', () => {
+test('createTask works with `this` assignment', () => {
   class FakeAngularComponent {
     myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+      return true;
+    });
+
+  }
+
+  let component;
+
+  expect(() => component = controller.create(() =>
+    new FakeAngularComponent(),
+  )).not.toThrow();
+
+  expect(() => component.myTask.perform()).not.toThrow();
+});
+
+test('createTask works with a normal call', () => {
+  class FakeAngularComponent {
+    myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
+      return true;
+    });
+  }
+
+  let component;
+
+  expect(() => component = controller.create(() =>
+    new FakeAngularComponent(),
+  )).not.toThrow();
+
+  expect(() => component.myTask.perform()).not.toThrow();
+});
+
+test('a task can be created on a component', () => {
+  class FakeAngularComponent {
+    myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
       return true;
     });
   }
@@ -38,7 +71,7 @@ test('a task can be created on a component', () => {
 test('a task can be performed', () => {
   class FakeAngularComponent {
     count = 0;
-    myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+    myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
       this.count++;
     });
   }
@@ -52,7 +85,7 @@ test('a task can be performed', () => {
 test('a task can be cancelled', () => {
   class FakeAngularComponent {
     count = 0;
-    myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+    myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
       yield timeout(100);
       this.count++;
     });
@@ -70,7 +103,7 @@ test('all task instances can be cancelled', async () => {
   let started = 0;
   let finished = 0;
   class FakeAngularComponent {
-    myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+    myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
       started++;
       yield timeout(3);
       finished++;
@@ -94,9 +127,9 @@ describe('scheduling', () => {
   test('an incorrect schedule name throws', async () => {
     class FakeAngularComponent {
       count = 0;
-      myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
         return true;
-      }).setSchedule('wrong');
+      }).setSchedule('wrong' as Schedule);
     }
 
     expect(() => controller.create(() => new FakeAngularComponent())).toThrowError('schedule');
@@ -105,7 +138,7 @@ describe('scheduling', () => {
   test('a task runs concurrent instances (by default)', async () => {
     class FakeAngularComponent {
       count = 0;
-      myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
         yield timeout(1);
         this.count++;
       });
@@ -124,7 +157,7 @@ describe('scheduling', () => {
   test('a task can drop concurrent performs', async () => {
     class FakeAngularComponent {
       count = 0;
-      myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
         yield timeout(1);
         this.count++;
       }).setSchedule('drop');
@@ -144,7 +177,7 @@ describe('scheduling', () => {
     class FakeAngularComponent {
       startedCount = 0;
       finishedCount = 0;
-      myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
         this.startedCount++;
         yield timeout(3);
         this.finishedCount++;
@@ -171,7 +204,7 @@ describe('scheduling', () => {
     class FakeAngularComponent {
       startedCount = 0;
       finishedCount = 0;
-      myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
         this.startedCount++;
         yield timeout(3);
         this.finishedCount++;
@@ -198,7 +231,7 @@ describe('scheduling', () => {
     class FakeAngularComponent {
       startedCount = 0;
       finishedCount = 0;
-      myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
         this.startedCount++;
         yield timeout(3);
         this.finishedCount++;
@@ -224,7 +257,7 @@ describe('lifecycle hooks', () => {
     let outsideStarted = 0;
     let outsideFinished = 0;
     class FakeAngularComponent {
-      myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
         outsideStarted++;
         yield timeout(3);
         outsideFinished++;
@@ -245,13 +278,13 @@ describe('lifecycle hooks', () => {
     let outsideStarted = 0;
     let outsideFinished = 0;
     class FakeAngularComponent {
-      myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
         outsideStarted++;
         yield timeout(3);
         outsideFinished++;
       });
 
-      myTask2: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+      myTask2: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
         outsideStarted++;
         yield timeout(3);
         outsideFinished++;
@@ -272,7 +305,7 @@ describe('lifecycle hooks', () => {
   test('the original ngOnDestroy is called when the component is destroyed', async () => {
     let original = 0;
     class FakeAngularComponent {
-      myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
         return true;
       });
 
@@ -290,7 +323,7 @@ describe('lifecycle hooks', () => {
   test('the original ngOnInit is called when the component is created', async () => {
     let original = 0;
     class FakeAngularComponent {
-      myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
         return true;
       });
 
@@ -308,7 +341,7 @@ describe('lifecycle hooks', () => {
     describe('isRunning', () => {
       test('when a task instance is running, the task is marked as running', async () => {
         class FakeAngularComponent {
-          myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+          myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
             yield timeout(3);
             return true;
           });
@@ -322,7 +355,7 @@ describe('lifecycle hooks', () => {
 
       test('when a task instance is cancelled, the task is marked as not running', async () => {
         class FakeAngularComponent {
-          myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+          myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
             yield timeout(3);
             return true;
           });
@@ -338,7 +371,7 @@ describe('lifecycle hooks', () => {
 
       test('when any task instance is running, the task is marked as running', async () => {
         class FakeAngularComponent {
-          myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+          myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
             yield timeout(3);
             return true;
           });
@@ -355,7 +388,7 @@ describe('lifecycle hooks', () => {
 
       test('when a task instance has finished, the task is marked as not running', async () => {
         class FakeAngularComponent {
-          myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+          myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
             yield timeout(1);
             return true;
           });
@@ -370,7 +403,7 @@ describe('lifecycle hooks', () => {
 
       test('only when the final task instance has finished, the task is marked as not running', async () => {
         class FakeAngularComponent {
-          myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+          myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
             yield timeout(3);
             return true;
           });
@@ -390,7 +423,7 @@ describe('lifecycle hooks', () => {
       describe('on the instance', () => {
         test('when a task instance is running, it is marked as running', async () => {
           class FakeAngularComponent {
-            myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+            myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
               yield timeout(3);
               return true;
             });
@@ -404,7 +437,7 @@ describe('lifecycle hooks', () => {
 
         test('when a task instance finished, it is marked as not running', async () => {
           class FakeAngularComponent {
-            myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+            myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
               yield timeout(2);
               return true;
             });
@@ -420,7 +453,7 @@ describe('lifecycle hooks', () => {
 
         test('when a task instance is cancelled, it is marked as not running', async () => {
           class FakeAngularComponent {
-            myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+            myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
               yield timeout(15);
               return true;
             });
@@ -438,7 +471,7 @@ describe('lifecycle hooks', () => {
 
     describe('last{Completed, Successful, Error}Value', () => {
       class FakeAngularComponent {
-        myAnythingTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent, input: any, final?: any) {
+        myAnythingTask: TaskObject = createTask(this, function* (this: FakeAngularComponent, input: any, final?: any) {
           const result = yield input;
           return final || result;
         });
