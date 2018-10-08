@@ -46,7 +46,7 @@ export class ConcurrencyTestComponent {
   cancelTaskSeconds = 0;
   restartTaskSeconds = 0;
 
-  basicTask = createTask.call(this, function* (this: ConcurrencyTestComponent, myTiming: number = 500) {
+  basicTask = createTask(this, function* (this: ConcurrencyTestComponent, myTiming: number = 500) {
     this.basicTaskText = 'waiting.';
     yield timeout(myTiming);
     this.basicTaskText = 'waiting..';
@@ -65,7 +65,7 @@ export class ConcurrencyTestComponent {
     this.droppingTaskText = 'waiting...';
     yield timeout(500);
     return this.droppingTaskText = 'BLAMMO';
-  };
+  } as any as TaskObject; // Needs to be forced into a TaskObject when using the @Task decorator.
 
   @Task({
     onChange: function () { console.log('changed', this); },
@@ -77,7 +77,7 @@ export class ConcurrencyTestComponent {
       console.log('ran');
       yield timeout(1000);
     }
-  };
+  } as any as TaskObject;
 
   @Task('restart') restartTask: TaskObject = function* (this: ConcurrencyTestComponent) {
     let i = 0;
@@ -86,7 +86,7 @@ export class ConcurrencyTestComponent {
       console.log('is running', this.restartTask.isRunning);
       yield timeout(1000);
     }
-  };
+  } as any as TaskObject;
 }
 ```
 

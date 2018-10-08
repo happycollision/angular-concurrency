@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Changelog has links to GitHub comparisons
 
+### Changed
+- `createTask` now can take two arguments: Component, and GeneratorFunction. Previously, the Component was assumed to be `this`. The old version still works, but the new one typechecks better.
+
 [Unreleased]: https://github.com/happycollision/angular-concurrency/compare/v1.1.0...HEAD
 
 ## [1.1.0] - 2018-10-02
