@@ -1,8 +1,14 @@
-import { Component } from '@angular/compiler/src/core';
+// import { Component } from '@angular/compiler/src/core';
 import { ChangeDetectorRef } from '@angular/core/src/change_detection';
 
 export async function timeout(time: number = 0) {
   return new Promise(res => setTimeout(res, time));
+}
+
+interface Component {
+  ngOnDestroy?: () => void;
+  ngOnInit?: () => void;
+  [s: string]: any;
 }
 
 // See https://basarat.gitbooks.io/typescript/content/docs/types/literal-types.html
