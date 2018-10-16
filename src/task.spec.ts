@@ -140,6 +140,25 @@ describe('yielding', () => {
     await timeout(6);
     expect(component.myTask.isRunning).toEqual(false);
   });
+
+  test('when yielding a taskInstance, execution will pause until the instance is complete', async () => {
+    class FakeAngularComponent {
+      count = 0;
+      myWaitingTask = createTask(this, function* () { yield timeout(5); });
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
+        yield this.myWaitingTask.perform();
+        this.count++;
+      });
+    }
+    const component = controller.create(() => new FakeAngularComponent());
+
+    component.myTask.perform();
+    await timeout(3);
+    expect(component.count).toEqual(0);
+
+    await timeout(3);
+    expect(component.count).toEqual(1);
+  });
 });
 
 describe('scheduling', () => {

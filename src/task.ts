@@ -55,6 +55,11 @@ export class TaskInstance implements ITaskInstance {
   isCancelled = false;
   completed: null | { success: boolean, error: boolean, value: any } = null;
 
+  private get __taskInstance() { return 'iamataskinstance'; }
+
+  private resolve!: (val?: any) => void;
+  private promise = new Promise((res) => this.resolve = res);
+
   private get shouldRun(): boolean {
     return (!this.isCancelled) && this.isRunning;
   }
@@ -77,10 +82,13 @@ export class TaskInstance implements ITaskInstance {
     return this;
   }
 
+  public asPromise() { return this.promise; }
+
   private async run(context: object, iterator: Generator, lastValue?: any) {
     if (this.shouldRun) {
       let resolved;
-      const { value, done } = iterator.next.call(context, lastValue);
+      const { value: valueToCheck, done } = iterator.next.call(context, lastValue);
+      const value = this.inspectForSpecialYields(valueToCheck);
       try {
         resolved = await value;
       } catch (e) {
@@ -98,9 +106,19 @@ export class TaskInstance implements ITaskInstance {
     }
   }
 
+  private inspectForSpecialYields(yieldedValue: any): any {
+    if (this.isTaskInstance(yieldedValue)) return yieldedValue.asPromise();
+    return yieldedValue;
+  }
+
+  private isTaskInstance(possibleInstance: any): possibleInstance is TaskInstance {
+    return possibleInstance && possibleInstance.__taskInstance === this.__taskInstance;
+  }
+
   private end() {
     this.isRunning = false;
     this.onCompleteFn(this);
+    this.resolve();
   }
 
   private endWithSuccessValue(value: any) {

@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 [Unreleased]: https://github.com/happycollision/angular-concurrency/compare/v1.2.0...HEAD
+### Added
+- `yield`ing a `taskInstance` will wait for that instance to complete just like a promise. Note that if the instance completes in error, the parent task is not considered to have errored also. You'll need to check that yourself.
 
 ## [1.2.0] - 2018-10-08
 ### Added
