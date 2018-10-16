@@ -24,103 +24,104 @@ const controller = new (class FakeAngularController {
 
 afterEach(() => controller.destroyAll());
 
-test('createTask works with `this` assignment', () => {
-  class FakeAngularComponent {
-    myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
-      return true;
-    });
+describe('task creation', () => {
+  test('createTask works with `this` assignment', () => {
+    class FakeAngularComponent {
+      myTask: TaskObject = createTask.call(this, function* (this: FakeAngularComponent) {
+        return true;
+      });
+    }
 
-  }
+    let component;
+    expect(() => component = controller.create(() =>
+      new FakeAngularComponent(),
+    )).not.toThrow();
 
-  let component;
+    expect(() => component.myTask.perform()).not.toThrow();
+  });
 
-  expect(() => component = controller.create(() =>
-    new FakeAngularComponent(),
-  )).not.toThrow();
+  test('createTask works with a normal call', () => {
+    class FakeAngularComponent {
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
+        return true;
+      });
+    }
 
-  expect(() => component.myTask.perform()).not.toThrow();
+    let component;
+
+    expect(() => component = controller.create(() =>
+      new FakeAngularComponent(),
+    )).not.toThrow();
+
+    expect(() => component.myTask.perform()).not.toThrow();
+  });
+
+  test('a task can be created on a component', () => {
+    class FakeAngularComponent {
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
+        return true;
+      });
+    }
+    expect(() => controller.create(() =>
+      new FakeAngularComponent(),
+    )).not.toThrow();
+  });
 });
 
-test('createTask works with a normal call', () => {
-  class FakeAngularComponent {
-    myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
-      return true;
-    });
-  }
+describe('performing and cancelling', () => {
+  test('a task can be performed', () => {
+    class FakeAngularComponent {
+      count = 0;
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
+        this.count++;
+      });
+    }
+    const component = controller.create(() => new FakeAngularComponent());
 
-  let component;
+    component.myTask.perform();
 
-  expect(() => component = controller.create(() =>
-    new FakeAngularComponent(),
-  )).not.toThrow();
+    expect(component.count).toEqual(1);
+  });
 
-  expect(() => component.myTask.perform()).not.toThrow();
-});
+  test('a task instance can be cancelled', () => {
+    class FakeAngularComponent {
+      count = 0;
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
+        yield timeout(100);
+        this.count++;
+      });
+    }
+    const component = controller.create(() => new FakeAngularComponent());
 
-test('a task can be created on a component', () => {
-  class FakeAngularComponent {
-    myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
-      return true;
-    });
-  }
-  expect(() => controller.create(() =>
-    new FakeAngularComponent(),
-  )).not.toThrow();
-});
+    const taskInstance = component.myTask.perform();
+    taskInstance.cancel();
 
-test('a task can be performed', () => {
-  class FakeAngularComponent {
-    count = 0;
-    myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
-      this.count++;
-    });
-  }
-  const component = controller.create(() => new FakeAngularComponent());
+    expect(component.count).toEqual(0);
+  });
 
-  component.myTask.perform();
+  test('all task instances can be cancelled from the main task', async () => {
+    let started = 0;
+    let finished = 0;
+    class FakeAngularComponent {
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
+        started++;
+        yield timeout(3);
+        finished++;
+      });
+    }
+    const component = controller.create(() => new FakeAngularComponent());
 
-  expect(component.count).toEqual(1);
-});
+    component.myTask.perform();
+    component.myTask.perform();
+    component.myTask.perform();
 
-test('a task can be cancelled', () => {
-  class FakeAngularComponent {
-    count = 0;
-    myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
-      yield timeout(100);
-      this.count++;
-    });
-  }
-  const component = controller.create(() => new FakeAngularComponent());
+    component.myTask.cancelAll();
 
-  const taskInstance = component.myTask.perform();
-  taskInstance.cancel();
+    await timeout(5);
 
-  expect(component.count).toEqual(0);
-});
-
-
-test('all task instances can be cancelled', async () => {
-  let started = 0;
-  let finished = 0;
-  class FakeAngularComponent {
-    myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
-      started++;
-      yield timeout(3);
-      finished++;
-    });
-  }
-  const component = controller.create(() => new FakeAngularComponent());
-
-  component.myTask.perform();
-  component.myTask.perform();
-  component.myTask.perform();
-
-  component.myTask.cancelAll();
-
-  await timeout(5);
-
-  expect(started).toEqual(3);
-  expect(finished).toEqual(0);
+    expect(started).toEqual(3);
+    expect(finished).toEqual(0);
+  });
 });
 
 describe('scheduling', () => {
@@ -252,7 +253,7 @@ describe('scheduling', () => {
   });
 });
 
-describe('lifecycle hooks', () => {
+describe('angular lifecycle hooks', () => {
   test('a task is cancelled when the component is destroyed', async () => {
     let outsideStarted = 0;
     let outsideFinished = 0;
@@ -336,24 +337,93 @@ describe('lifecycle hooks', () => {
 
     expect(original).toEqual(1);
   });
+});
 
-  describe('derived state', () => {
-    describe('isRunning', () => {
-      test('when a task instance is running, the task is marked as running', async () => {
-        class FakeAngularComponent {
-          myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
-            yield timeout(3);
-            return true;
-          });
-        }
-        const component = controller.create(() => new FakeAngularComponent());
+describe('derived state', () => {
+  describe('isRunning', () => {
+    test('when a task instance is running, the task is marked as running', async () => {
+      class FakeAngularComponent {
+        myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
+          yield timeout(3);
+          return true;
+        });
+      }
+      const component = controller.create(() => new FakeAngularComponent());
 
-        component.myTask.perform();
+      component.myTask.perform();
 
-        expect(component.myTask.isRunning).toEqual(true);
-      });
+      expect(component.myTask.isRunning).toEqual(true);
+    });
 
-      test('when a task instance is cancelled, the task is marked as not running', async () => {
+    test('when a task instance is cancelled, the task is marked as not running', async () => {
+      class FakeAngularComponent {
+        myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
+          yield timeout(3);
+          return true;
+        });
+      }
+      const component = controller.create(() => new FakeAngularComponent());
+
+      const instance = component.myTask.perform();
+      await timeout();
+      instance.cancel();
+
+      expect(component.myTask.isRunning).toEqual(false);
+    });
+
+    test('when any task instance is running, the task is marked as running', async () => {
+      class FakeAngularComponent {
+        myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
+          yield timeout(3);
+          return true;
+        });
+      }
+      const component = controller.create(() => new FakeAngularComponent());
+
+      component.myTask.perform();
+      await timeout(2);
+      component.myTask.perform();
+      await timeout(2);
+
+      expect(component.myTask.isRunning).toEqual(true);
+    });
+
+    test('when a task instance has finished, the task is marked as not running', async () => {
+      class FakeAngularComponent {
+        myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
+          yield timeout(1);
+          return true;
+        });
+      }
+      const component = controller.create(() => new FakeAngularComponent());
+
+      component.myTask.perform();
+      await timeout(2);
+
+      expect(component.myTask.isRunning).toEqual(false);
+    });
+
+    test('only when the final task instance has finished, the task is marked as not running', async () => {
+      class FakeAngularComponent {
+        myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
+          yield timeout(3);
+          return true;
+        });
+      }
+      const component = controller.create(() => new FakeAngularComponent());
+
+      component.myTask.perform();
+      await timeout(2);
+      component.myTask.perform();
+      await timeout(2);
+
+      expect(component.myTask.isRunning).toEqual(true);
+      await timeout(2);
+      expect(component.myTask.isRunning).toEqual(false);
+    });
+
+    describe('on the instance', () => {
+      test('when a task instance is running, it is marked as running', async () => {
         class FakeAngularComponent {
           myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
             yield timeout(3);
@@ -363,180 +433,111 @@ describe('lifecycle hooks', () => {
         const component = controller.create(() => new FakeAngularComponent());
 
         const instance = component.myTask.perform();
-        await timeout();
+
+        expect(instance.isRunning).toEqual(true);
+      });
+
+      test('when a task instance finished, it is marked as not running', async () => {
+        class FakeAngularComponent {
+          myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
+            yield timeout(2);
+            return true;
+          });
+        }
+        const component = controller.create(() => new FakeAngularComponent());
+
+        const instance = component.myTask.perform();
+        await timeout(3);
+
+        expect(instance.isRunning).toEqual(false);
+      });
+
+
+      test('when a task instance is cancelled, it is marked as not running', async () => {
+        class FakeAngularComponent {
+          myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
+            yield timeout(15);
+            return true;
+          });
+        }
+        const component = controller.create(() => new FakeAngularComponent());
+
+        const instance = component.myTask.perform();
+        await timeout(1);
         instance.cancel();
 
-        expect(component.myTask.isRunning).toEqual(false);
-      });
-
-      test('when any task instance is running, the task is marked as running', async () => {
-        class FakeAngularComponent {
-          myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
-            yield timeout(3);
-            return true;
-          });
-        }
-        const component = controller.create(() => new FakeAngularComponent());
-
-        component.myTask.perform();
-        await timeout(2);
-        component.myTask.perform();
-        await timeout(2);
-
-        expect(component.myTask.isRunning).toEqual(true);
-      });
-
-      test('when a task instance has finished, the task is marked as not running', async () => {
-        class FakeAngularComponent {
-          myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
-            yield timeout(1);
-            return true;
-          });
-        }
-        const component = controller.create(() => new FakeAngularComponent());
-
-        component.myTask.perform();
-        await timeout(2);
-
-        expect(component.myTask.isRunning).toEqual(false);
-      });
-
-      test('only when the final task instance has finished, the task is marked as not running', async () => {
-        class FakeAngularComponent {
-          myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
-            yield timeout(3);
-            return true;
-          });
-        }
-        const component = controller.create(() => new FakeAngularComponent());
-
-        component.myTask.perform();
-        await timeout(2);
-        component.myTask.perform();
-        await timeout(2);
-
-        expect(component.myTask.isRunning).toEqual(true);
-        await timeout(2);
-        expect(component.myTask.isRunning).toEqual(false);
-      });
-
-      describe('on the instance', () => {
-        test('when a task instance is running, it is marked as running', async () => {
-          class FakeAngularComponent {
-            myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
-              yield timeout(3);
-              return true;
-            });
-          }
-          const component = controller.create(() => new FakeAngularComponent());
-
-          const instance = component.myTask.perform();
-
-          expect(instance.isRunning).toEqual(true);
-        });
-
-        test('when a task instance finished, it is marked as not running', async () => {
-          class FakeAngularComponent {
-            myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
-              yield timeout(2);
-              return true;
-            });
-          }
-          const component = controller.create(() => new FakeAngularComponent());
-
-          const instance = component.myTask.perform();
-          await timeout(3);
-
-          expect(instance.isRunning).toEqual(false);
-        });
-
-
-        test('when a task instance is cancelled, it is marked as not running', async () => {
-          class FakeAngularComponent {
-            myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
-              yield timeout(15);
-              return true;
-            });
-          }
-          const component = controller.create(() => new FakeAngularComponent());
-
-          const instance = component.myTask.perform();
-          await timeout(1);
-          instance.cancel();
-
-          expect(instance.isRunning).toEqual(false);
-        });
+        expect(instance.isRunning).toEqual(false);
       });
     });
+  });
 
-    describe('last{Completed, Successful, Error}Value', () => {
-      class FakeAngularComponent {
-        myAnythingTask: TaskObject = createTask(this, function* (this: FakeAngularComponent, input: any, final?: any) {
-          const result = yield input;
-          return final || result;
-        });
-      }
-      let component: FakeAngularComponent;
-
-      beforeEach(() => {
-        component = controller.create(() => new FakeAngularComponent());
+  describe('last{Completed, Successful, Error}Value', () => {
+    class FakeAngularComponent {
+      myAnythingTask: TaskObject = createTask(this, function* (this: FakeAngularComponent, input: any, final?: any) {
+        const result = yield input;
+        return final || result;
       });
+    }
+    let component: FakeAngularComponent;
 
-      test('when a task has had no value, it is null', async () => {
+    beforeEach(() => {
+      component = controller.create(() => new FakeAngularComponent());
+    });
 
-        expect(component.myAnythingTask.lastCompletedValue).toEqual(null);
-      });
+    test('when a task has had no value, it is null', async () => {
 
-      test('when a task has completed successfully, the returned value is set as lastCompletedValue', async () => {
+      expect(component.myAnythingTask.lastCompletedValue).toEqual(null);
+    });
 
-        component.myAnythingTask.perform('success');
-        await timeout();
+    test('when a task has completed successfully, the returned value is set as lastCompletedValue', async () => {
 
-        expect(component.myAnythingTask.lastCompletedValue).toEqual('success');
-      });
+      component.myAnythingTask.perform('success');
+      await timeout();
 
-      test('when a task has completed successfully, the returned value is set as lastSuccessfulValue', async () => {
+      expect(component.myAnythingTask.lastCompletedValue).toEqual('success');
+    });
 
-        component.myAnythingTask.perform('success');
-        await timeout();
+    test('when a task has completed successfully, the returned value is set as lastSuccessfulValue', async () => {
 
-        expect(component.myAnythingTask.lastSuccessfulValue).toEqual('success');
-      });
+      component.myAnythingTask.perform('success');
+      await timeout();
 
-      test('when a task has completed in failure, the returned value is set as lastCompletedValue', async () => {
-        component.myAnythingTask.perform(new Error('failed'));
-        await timeout();
+      expect(component.myAnythingTask.lastSuccessfulValue).toEqual('success');
+    });
 
-        expect(component.myAnythingTask.lastCompletedValue).toEqual(new Error('failed'));
-      });
+    test('when a task has completed in failure, the returned value is set as lastCompletedValue', async () => {
+      component.myAnythingTask.perform(new Error('failed'));
+      await timeout();
 
-      test('when a task has completed in failure, the returned value is set as lastErrorValue', async () => {
-        component.myAnythingTask.perform(new Error('failed'));
-        await timeout();
+      expect(component.myAnythingTask.lastCompletedValue).toEqual(new Error('failed'));
+    });
 
-        expect(component.myAnythingTask.lastErrorValue).toEqual(new Error('failed'));
-      });
+    test('when a task has completed in failure, the returned value is set as lastErrorValue', async () => {
+      component.myAnythingTask.perform(new Error('failed'));
+      await timeout();
 
-      test('when a task has yielded a failed promise, the error reason is set as lastCompletedValue', async () => {
-        component.myAnythingTask.perform(Promise.reject('mid-task rejection'));
-        await timeout();
+      expect(component.myAnythingTask.lastErrorValue).toEqual(new Error('failed'));
+    });
 
-        expect(component.myAnythingTask.lastCompletedValue).toEqual('mid-task rejection');
-      });
+    test('when a task has yielded a failed promise, the error reason is set as lastCompletedValue', async () => {
+      component.myAnythingTask.perform(Promise.reject('mid-task rejection'));
+      await timeout();
 
-      test('when a task has yielded a failed promise, the error reason is set as lastErrorValue', async () => {
-        component.myAnythingTask.perform(Promise.reject('mid-task rejection'), 'never should get to this');
-        await timeout();
+      expect(component.myAnythingTask.lastCompletedValue).toEqual('mid-task rejection');
+    });
 
-        expect(component.myAnythingTask.lastErrorValue).toEqual('mid-task rejection');
-      });
+    test('when a task has yielded a failed promise, the error reason is set as lastErrorValue', async () => {
+      component.myAnythingTask.perform(Promise.reject('mid-task rejection'), 'never should get to this');
+      await timeout();
 
-      test('when a task returns a failed promise, the error reason is set as lastCompletedValue', async () => {
-        component.myAnythingTask.perform(null, Promise.reject('final rejection'));
-        await timeout();
+      expect(component.myAnythingTask.lastErrorValue).toEqual('mid-task rejection');
+    });
 
-        expect(component.myAnythingTask.lastCompletedValue).toEqual('final rejection');
-      });
+    test('when a task returns a failed promise, the error reason is set as lastCompletedValue', async () => {
+      component.myAnythingTask.perform(null, Promise.reject('final rejection'));
+      await timeout();
+
+      expect(component.myAnythingTask.lastCompletedValue).toEqual('final rejection');
     });
   });
 });
