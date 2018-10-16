@@ -116,22 +116,26 @@ export class TaskInstance implements ITaskInstance {
   }
 
   private end() {
+    if (!this.isRunning) return;
     this.isRunning = false;
     this.onCompleteFn(this);
     this.resolve();
   }
 
   private endWithSuccessValue(value: any) {
+    if (!this.isRunning) return;
     this.completed = { success: true, error: false, value };
     this.end();
   }
 
   private endWithCancel() {
+    if (this.isCancelled) return;
     this.isCancelled = true;
     this.end();
   }
 
   private endWithErrorValue(error: Error) {
+    if (!this.isRunning) return;
     this.completed = { success: false, error: true, value: error };
     this.end();
   }

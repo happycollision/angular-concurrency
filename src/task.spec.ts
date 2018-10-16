@@ -161,6 +161,73 @@ describe('yielding', () => {
   });
 });
 
+describe('onChange', () => {
+  test('it fires of the given function on task start', async () => {
+    const spy = jest.fn();
+    class FakeAngularComponent {
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
+        yield timeout(9999);
+      }).onChange(spy);
+    }
+    const component = controller.create(() => new FakeAngularComponent());
+
+    component.myTask.perform();
+
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  test('it fires of the given function on task end', async () => {
+    const spy = jest.fn();
+    class FakeAngularComponent {
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
+        // nothing
+      }).onChange(spy);
+    }
+    const component = controller.create(() => new FakeAngularComponent());
+
+    component.myTask.perform();
+    await timeout();
+
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
+
+  test('it fires of the given function on task cancellation', async () => {
+    const spy = jest.fn();
+    class FakeAngularComponent {
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
+        yield timeout(9999);
+      }).onChange(spy);
+    }
+    const component = controller.create(() => new FakeAngularComponent());
+
+    component.myTask.perform();
+    await timeout();
+    component.myTask.cancelAll();
+    await timeout();
+
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
+
+  test('it fires on cancellation only if there is anything to cancel', async () => {
+    const spy = jest.fn();
+    class FakeAngularComponent {
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
+        yield timeout(9999);
+      }).onChange(spy);
+    }
+    const component = controller.create(() => new FakeAngularComponent());
+
+    component.myTask.perform();
+    await timeout();
+    component.myTask.cancelAll();
+    await timeout();
+    component.myTask.cancelAll();
+    await timeout();
+
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe('scheduling', () => {
   test('an incorrect schedule name throws', async () => {
     class FakeAngularComponent {
