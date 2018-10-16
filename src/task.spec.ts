@@ -124,6 +124,24 @@ describe('performing and cancelling', () => {
   });
 });
 
+describe('yielding', () => {
+  test('when yielding a promise, the task will run while the promise is pending', async () => {
+    class FakeAngularComponent {
+      count = 0;
+      myTask: TaskObject = createTask(this, function* (this: FakeAngularComponent) {
+        yield timeout(5);
+      });
+    }
+    const component = controller.create(() => new FakeAngularComponent());
+
+    component.myTask.perform();
+    expect(component.myTask.isRunning).toEqual(true);
+
+    await timeout(6);
+    expect(component.myTask.isRunning).toEqual(false);
+  });
+});
+
 describe('scheduling', () => {
   test('an incorrect schedule name throws', async () => {
     class FakeAngularComponent {
