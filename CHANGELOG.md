@@ -5,9 +5,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-[Unreleased]: https://github.com/happycollision/angular-concurrency/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/happycollision/angular-concurrency/compare/v1.3.1...HEAD
+
+
+## [1.3.1] - 2018-10-16
 ### Changed
 - Calling cancel on a taskInstance will be a no-op if it is not running.
+
+[1.3.1]: https://github.com/happycollision/angular-concurrency/compare/v1.3.0...v1.3.1
 
 ## [1.3.0] - 2018-10-16
 ### Added
