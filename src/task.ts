@@ -1,6 +1,3 @@
-// import { Component } from '@angular/compiler/src/core';
-import { ChangeDetectorRef } from '@angular/core/src/change_detection';
-
 export async function timeout(time: number = 0) {
   return new Promise(res => setTimeout(res, time));
 }
@@ -169,7 +166,6 @@ export class TaskObject {
   constructor(
     private parentComponent: Component,
     private generatorFn: GeneratorFunction,
-    private changeDetector?: ChangeDetectorRef,
   ) {
     this.hookUpParentEvents();
   }
