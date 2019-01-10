@@ -22,12 +22,14 @@ PRs welcome. :wink:
 Love to you all!
 
 ## Roadmap
-
 I am not necessarily interested in feature-pairity with EC. Feature requests are welcome. I will, however, eventually be sure that any terminology is comparable, but I have not taken the time to do that just yet.
+
+
+The last update to this project was made to remove an Angular version dependency problem. Once I did that, I realized that there isn't *much* that binds this whole thing to Angular specifically. This means that I could eventually release this as a library with a couple ways to hook into any existing js framework you like. That will probably be my next step.
 
 Things I would like to do:
 - Add documentation
-- Add live examples inside an actual Anguar app.
+- Add live examples inside an actual app.
 
 ## example:
 
