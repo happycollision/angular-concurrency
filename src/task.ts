@@ -84,7 +84,7 @@ export class TaskInstance implements ITaskInstance {
   private async run(context: object, iterator: Generator, lastValue?: any) {
     if (this.shouldRun) {
       let resolved;
-      const { value: valueToCheck, done } = iterator.next.call(context, lastValue);
+      const { value: valueToCheck, done } = iterator.next.bind(iterator).call(context, lastValue);
       const value = this.inspectForSpecialYields(valueToCheck);
       try {
         resolved = await value;
