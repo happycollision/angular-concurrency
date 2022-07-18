@@ -89,7 +89,7 @@ export class TaskInstance implements ITaskInstance {
       try {
         resolved = await value;
       } catch (e) {
-        return this.endWithErrorValue(e);
+        return this.endWithErrorValue(e as any);
       }
       if (done) {
         if (value instanceof Error) {
